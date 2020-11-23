@@ -1,2 +1,2 @@
 # Ultimate-Tic-Tac-Toe
-BCA Capstone Project
+Single player Tic-Tac-Toe game written in Rust 
