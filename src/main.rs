@@ -1,7 +1,4 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-//! Tic Tac Toe with Minimax with AB prunning + GUI with ggez
-//! TODO: need to dumb it down & use rand to make it beatable.
-//! Perhaps limiting depth of minimax at different levels of "smartness"
 
 use ggez;
 use ggez::event;
