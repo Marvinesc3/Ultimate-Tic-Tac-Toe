@@ -1,5 +1,5 @@
 //! Strapped the GUI on top of a previous terminal (termion) based version
-//! Didn't reactor all the game logic code, currently just bolted everything on top of the existing Board structure
+//! Didn't reactor all the game logic code, currently everything is just bolted on top of the existing Board structure
 //! instead of implementing a MainState struct for the game state
 //! separate from the Board struct. Sorry for the ugly code.
 
