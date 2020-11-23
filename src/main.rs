@@ -1,22 +1,31 @@
-use druid::{AppLauncher, WindowDesc, Widget, PlatformError};
-use druid::widget::{Label, Flex, Padding, Align};
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+//! Tic Tac Toe with Minimax with AB prunning + GUI with ggez
+//! TODO: need to dumb it down & use rand to make it beatable.
+//! Perhaps limiting depth of minimax at different levels of "smartness"
 
-fn build_ui() -> impl Widget<()> {
-    Padding::new(
-        10.0,
-        Flex::row()
-            .with_flex_child(
-                Flex::column()
-                    .with_flex_child(Label::new("top left"), 1.0)
-                    .with_flex_child(Align::centered(Label::new("bottom left")), 1.0),
-                1.0)
-            .with_flex_child(
-                Flex::column()
-                    .with_flex_child(Label::new("top right"), 1.0)
-                    .with_flex_child(Align::centered(Label::new("bottom right")), 1.0),
-                1.0))
-}
+use ggez;
+use ggez::event;
+use ggez::GameResult;
 
-fn main() -> Result<(), PlatformError> {
-    AppLauncher::with_window(WindowDesc::new(build_ui)).launch(())?;
-    Ok(())
+mod constants;
+mod game;
+mod drawing;
+
+use constants::{NAME, AUTHOR, WINDOW_SIZE};
+use crate::game::{Board, Player};
+
+
+fn main() -> GameResult {
+
+    // Make a Context and an event loop
+    let (ctx, event_loop) = &mut ggez::ContextBuilder::new(NAME, AUTHOR)
+        .window_setup(ggez::conf::WindowSetup::default().title(NAME))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
+        .build()?;
+
+    // create the game state with the human player going first with X
+    let state = &mut Board::new(Player::X);
+
+    // launch the game by start running the event loop
+    // uses the context and event loop we created above and the game state we just created
+    event::run(ctx, event_loop, state)
