@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 druid = "0.6.0"
+ggez = "0.5.1"
