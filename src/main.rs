@@ -13,7 +13,7 @@ use crate::game::{Board, Player};
 
 
 fn main() -> GameResult {
-    
+
     // Make a Context and an event loop
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new(NAME, AUTHOR)
         .window_setup(ggez::conf::WindowSetup::default().title(NAME))
@@ -26,5 +26,3 @@ fn main() -> GameResult {
     // launch the game by start running the event loop
     // uses the context and event loop we created above and the game state we just created
     event::run(ctx, event_loop, state)
-
-}
