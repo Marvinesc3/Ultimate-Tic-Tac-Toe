@@ -19,10 +19,10 @@ fn main() -> GameResult {
         .window_mode(ggez::conf::WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
         .build()?;
 
-    // create the game state with the human player going first with X
+    // Create the game state with the human player going first with X
     let state = &mut Board::new(Player::X);
 
-    // launch the game by start running the event loop
-    // uses the context and event loop we created above and the game state we just created
+    // Launch the game by start running the event loop
+    // Uses the context and event loop we created above and the game state we just created
     event::run(ctx, event_loop, state)
 }
