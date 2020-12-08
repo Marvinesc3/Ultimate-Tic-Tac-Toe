@@ -1,5 +1,5 @@
 # Ultimate-Tic-Tac-Toe
-Single player Tic-Tac-Toe game written in Rust 
+Multiplayer Tic-Tac-Toe game written in Rust 
 
 # Setup
 - Clone the repository with the following command: `git clone https://github.com/Marvinesc3/Ultimate-Tic-Tac-Toe `
@@ -10,6 +10,7 @@ Single player Tic-Tac-Toe game written in Rust
 
 # Features 
 - A two-player game where each player will be randomly picked to be player X or player O 
+- Singleplayer Functionality - You can play vesus an AI bot 
 - Multiplayer functionality 
       - Join one of two possible rooms and challenge your friends
 
