@@ -1,0 +1,11 @@
+d:\Code\Ultimate-Tic-Tac-Toe\multiplayer\server\target\debug\deps\syntex_errors-efcf768f19df5219.rmeta: C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\lib.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\emitter.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\snippet.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\registry.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\styled_buffer.rs
+
+d:\Code\Ultimate-Tic-Tac-Toe\multiplayer\server\target\debug\deps\libsyntex_errors-efcf768f19df5219.rlib: C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\lib.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\emitter.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\snippet.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\registry.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\styled_buffer.rs
+
+d:\Code\Ultimate-Tic-Tac-Toe\multiplayer\server\target\debug\deps\syntex_errors-efcf768f19df5219.d: C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\lib.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\emitter.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\snippet.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\registry.rs C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\styled_buffer.rs
+
+C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\lib.rs:
+C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\emitter.rs:
+C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\snippet.rs:
+C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\registry.rs:
+C:\Users\Wiktor\.cargo\registry\src\github.com-1ecc6299db9ec823\syntex_errors-0.42.0\src\styled_buffer.rs:

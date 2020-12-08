@@ -19,8 +19,7 @@ use crate::TicTacToeStructs::TicTacToeStructs::Message;
 use crate::TicTacToeStructs::TicTacToeStructs::ServerMessage;
 use crate::TicTacToeStructs::TicTacToeStructs::Rooms;
 
-
-
+use std::net::Ipv4Addr;
 
 
 fn main() {
@@ -28,7 +27,7 @@ fn main() {
     // let PORT: &str= "6000";
     // println!("here1?");
     let addr = Ipv4Addr::UNSPECIFIED;
-    let IP = std::env::var("IP").unwrap().to_owned()
+    let IP = std::env::var("IP").unwrap().to_owned();
     println!("local ip address: {:?}", addr);
     println!("here?");
     let localIp = IP+":" +PORT; 
@@ -72,34 +71,59 @@ fn main() {
                 println!("msg:{:?}",msg);
                 if Rooms.addMemberToRoom(msg.getMessage().getData(), msg.getUser()) {
                     println!("found room: ");
-                    let mut buff = bincode::serialize(&Message::new("enteredRoom".to_string(),"data".to_string())).unwrap();
-                    
-                    let temp = msg.getUser().getStream().write_all(&buff);
-                    println!("temp {:?}",temp);
+                    let numOfPlayers = Rooms.findRoom(msg.getMessage().getData()).unwrap().getNumberOfPlayers();
+                    let currentPlayerTurn = Rooms.findRoom(msg.getMessage().getData()).unwrap().getPlayersTurn();
+                    let mut buff = bincode::serialize(&Message::new("enteredRoom".to_string(),
+                        numOfPlayers.to_string())).unwrap();
+                    let mut temp = msg.getUser().getStream().try_clone().expect("failed to clone client");
+                    buff.resize(MSG_SIZE, 0);
+                    if let Err(io_error) = temp.write_all(&buff) {
+                        println!("io error {}", io_error);
+                    }
+                    if numOfPlayers == currentPlayerTurn{
+                        let mut buff = bincode::serialize(&Message::new("PlayerTurn".to_string(),
+                        "".to_string())).unwrap();
+                        let mut temp = msg.getUser().getStream().try_clone().expect("failed to clone client");
+                        buff.resize(MSG_SIZE, 0);
+                        if let Err(io_error) = temp.write_all(&buff) {
+                            println!("io error {}", io_error);
+                        }
+                    }
                 }else{
                     println!("did not find room");
                     let mut buff = bincode::serialize(&Message::new("Error".to_string(),"error finding room".to_string())).unwrap();
-                    println!("buff {:?}",buff);
-                    let mut temps = vec![];
-                    temps.push(msg.getUser().getStream().try_clone().expect("failed to clone client"));
-                    temps = temps.into_iter().filter_map(|mut temp| {
-                        println!("msg: {:?}", msg);
-                        let mut buff = bincode::serialize(&msg.getMessage()).unwrap();
-                        buff.resize(MSG_SIZE, 0);
-                        temp.write_all(&buff).map(|_| temp).ok()
-                    }).collect::<Vec<_>>();
-                    let temp = msg.getUser().getStream().write_all(&buff).map(|_| msg.getUser().getStream()).ok().unwrap();
-                    println!("temp {:?}",temp);                    
+                    // println!("buff {:?} len:{}",buff, buff.len());
+                    let mut temp = msg.getUser().getStream().try_clone().expect("failed to clone client");
+                    // let mut buff = bincode::serialize(&msg.getMessage()).unwrap();
+                    buff.resize(MSG_SIZE, 0);
+                    if let Err(io_error) = temp.write_all(&buff) {
+                        println!("io error {}", io_error);
+                    }               
                 }
 
+            }else if msg.getMessage().getHeader() == "Move"{
+                println!("Move!");
+                Rooms.MoveWithAddr(msg.getMessage().getData(),msg.getUser().getAddr());
+            }else if msg.getMessage().getHeader() == "SendMsg"{
+                println!("SendMsg");
+               match Rooms.findRoomWithAddr(msg.getUser().getAddr()){
+                    Ok(room) => {
+                        println!("calling broadcast...");
+                        println!("room {:?}",room);
+                        let mut buff = bincode::serialize(&Message::new("Error".to_string(),"error finding room".to_string())).unwrap();
+                        buff.resize(MSG_SIZE, 0);
+                        room.broadcastToAll(Message::new(msg.getMessage().getHeader(),msg.getMessage().getData()))
+                    },
+                    Err(e) => println!("Error in SendMsg! {:?}", e),
+               }
             }else{
                 clients = clients.into_iter().filter_map(|mut client| {
-                println!("msg: {:?}", msg);
-                let mut buff = bincode::serialize(&msg.getMessage()).unwrap();
-                buff.resize(MSG_SIZE, 0);
-                println!("client {:?}", client);
-                client.write_all(&buff).map(|_| client).ok()
-            }).collect::<Vec<_>>();
+                    println!("msg: {:?}", msg);
+                    let mut buff = bincode::serialize(&msg.getMessage()).unwrap();
+                    buff.resize(MSG_SIZE, 0);
+                    println!("client {:?}", client);
+                    client.write_all(&buff).map(|_| client).ok()
+                }).collect::<Vec<_>>();
             }
             
         }

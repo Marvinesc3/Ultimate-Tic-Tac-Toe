@@ -2,15 +2,25 @@
 //! Didn't reactor all the game logic code, currently everything is just bolted on top of the existing Board structure
 //! instead of implementing a MainState struct for the game state
 //! separate from the Board struct. Sorry for the ugly code.
-
-
+use std::io::{self, ErrorKind, Read, Write};
+use std::net::TcpStream;
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{self, TryRecvError};
+use std::thread;
+use std::time::Duration;
+use std::sync::mpsc::Sender;
 use crate::drawing::*;
-
+use crossbeam_channel::*;
+use crossbeam_channel::unbounded;
+use std::sync::atomic::{AtomicBool, Ordering};
 use ggez::{
     event::{self, KeyCode, KeyMods, MouseButton},
     graphics::{self, DrawParam, MeshBuilder},
     Context, GameResult,
 };
+#[path = "../multiplayer/TicTacToeStructs.rs"]
+mod TicTacToeStructs;
+use crate::TicTacToeStructs::TicTacToeStructs::Message;
 
 use crate::constants::{BOARD_POS, BOARD_SIDE, SQUARE_SIZE};
 
@@ -33,7 +43,7 @@ impl Player {
 
 
 // UI related enums
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum SelectedCell {
     NotSelected,
     Selected { x: usize, y: usize },
@@ -64,18 +74,30 @@ pub enum GameState {
 
 
 // Main game state
-#[derive(Copy, Clone)]
+// #[derive(Copy, Clone)]
+
+#[derive(Debug)]
 pub struct Board {
     pub fields: [[Option<Player>; 3]; 3],
     pub next_player: Player,
     pub selected_cell: SelectedCell,
-}
+    pub players_turn: bool,
+    pub joined_room: bool,
+    pub tx: crossbeam_channel::Sender<Message>,
+    pub rx: crossbeam_channel::Receiver<String>,
+    pub tx2: crossbeam_channel::Sender<String>,
+    pub rx2: crossbeam_channel::Receiver<String>,
+    
+    // pub tx:Sender<std::string::String>,
+    // pub rx: std::sync::mpsc::Receiver<std::string::String>,
+}   
 
 
 impl Board {
 
-    pub fn new(first_player: Player) -> Board {
-        Board {
+    pub fn new(first_player: Player, tx: crossbeam_channel::Sender<Message>, rx:crossbeam_channel::Receiver<String>) -> Board {
+        let (tx2, rx2):(crossbeam_channel::Sender<String>, crossbeam_channel::Receiver<String>) = unbounded();
+        let mut board = Board {
             fields: [
                 [None, None, None],
                 [None, None, None],
@@ -83,9 +105,48 @@ impl Board {
             ],
             next_player: first_player,
             selected_cell: SelectedCell::NotSelected,
-        }
+            players_turn: false,
+            joined_room: false,
+            tx: tx.clone(),
+            rx,
+            tx2,
+            rx2,
+        };
+        // let board_ref =  &board;
+        // thread::spawn(move || loop {
+        //     if let Ok(msg) = rx.try_recv() {
+        //         // board.joined_room =false;
+        //         board_ref.spawn_rx_thread();
+        //     }
+        //     thread::sleep(Duration::from_millis(100));
+        // });
+        board.spawn_rx_thread();
+        board
     }
 
+    pub fn spawn_rx_thread(&mut self){
+        let rx = self.rx.clone();
+        let tx2 =self.tx2.clone();
+        thread::spawn(move || loop {
+            if let Ok(msg) = rx.try_recv() {
+                println!("IN THE RX {}", msg);
+                // joined_room = true;
+                
+                tx2.send(msg).expect("Error");
+            }
+            thread::sleep(Duration::from_millis(100));
+        });
+    }
+
+    // pub fn spawn_tx_thread(&mut self){
+    //     loop{
+    //         if let Ok(msg) = self.rx2.try_recv() {
+    //             println!("Object rx2! {}", msg);
+    //             self.joined_room = true;
+    //         }
+    //         thread::sleep(Duration::from_millis(100));
+    //     }
+    // }
 
     pub fn next_player(&self) -> Player {
 
@@ -181,8 +242,6 @@ impl Board {
 
 
     pub fn perform_action(&mut self, action: (i32, i32)) {
-    
-        debug_assert!(self.is_legal_action(action));
 
         // Perform...
         self.fields[action.0 as usize][action.1 as usize] = Some(self.next_player);
@@ -237,7 +296,15 @@ impl Board {
 
     // As soon as we have valid user input perform user action and then AI action
     fn perform_both_turns(&mut self, user_action: (i32, i32)) {
-        self.next_player();
+        // self.next_player();
+        if  self.players_turn == true{
+            let  sendMsg:String ="".to_string() + &user_action.0.to_string() + ","+ &user_action.1.to_string();
+            let message: Message = Message::new("Move".to_string(),sendMsg);
+            // sendMsg.push_str(user_action.0.to_string());
+            // sendMsg = sendMsg + &user_action.0.to_string();
+            self.tx.send(message).expect("failed to send msg to rx");
+        }
+        
         self.perform_action(user_action);
         // As Human is 1st player check if game has not ended before AI's turn
         if !self.is_ended() {
@@ -332,6 +399,24 @@ impl Board {
 impl event::EventHandler for Board {
 
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        if let Ok(msg) = self.rx2.try_recv() {
+            println!("Object rx2! {}", msg);
+            if msg.contains("Joined room"){
+                self.joined_room = true;
+            }else if msg.contains("EnemyMove"){
+                let vec = (msg["EnemyMove".len()..].split(",")).collect::<Vec<&str>>();
+                let x = i32::from(String::from(vec[0]).parse::<i32>().unwrap()).clone();
+                let y = i32::from(String::from(vec[1]).parse::<i32>().unwrap()).clone();
+                
+                // let user_action = (vec[0].clone().parse::<i32>().unwrap(),vec[1].clone().parse::<i32>().unwrap());
+                self.perform_both_turns((x,y));
+                self.players_turn = true;
+            }else if msg.contains("PlayerTurn"){
+                println!("PLAYER TURN IN OBJECT");
+                self.players_turn = true;
+            }
+            
+        }
         Ok(())
     }
 
@@ -343,8 +428,9 @@ impl event::EventHandler for Board {
                 if pointing_where == PointingWhereType::InsideTheBoard {
                     let cell = self.get_cell(x, y);
                     let user_action = (cell.1 as i32, cell.0 as i32); // row, column
-                    if self.is_legal_action(user_action) {
+                    if self.is_legal_action(user_action) && self.joined_room && self.players_turn{
                         self.perform_both_turns(user_action);
+                        self.players_turn = false;
                     }
                 }
             }
@@ -365,17 +451,18 @@ impl event::EventHandler for Board {
         _keymod: KeyMods, _repeat: bool,) {
 
         match keycode {
-            KeyCode::R => *self = Board::new(Player::X),
+            // KeyCode::R => *self = Board::new(Player::X,tx),
             KeyCode::Left => self.move_selected_cell(Directions::Left),
             KeyCode::Right => self.move_selected_cell(Directions::Right),
             KeyCode::Up => self.move_selected_cell(Directions::Up),
             KeyCode::Down => self.move_selected_cell(Directions::Down),
             KeyCode::Space => {
                 if !self.is_ended() {
-                    if self.check_valid_action_on_selected_cell(Player::X) {
+                    if self.check_valid_action_on_selected_cell(Player::X) && self.joined_room && self.players_turn {
                         if let SelectedCell::Selected { x, y } = self.get_selected_cell() {
                             let action = (y as i32, x as i32); // row and column
                             self.perform_both_turns(action);
+                            self.players_turn = false;
                         }
                     }
                 }
@@ -424,8 +511,8 @@ impl event::EventHandler for Board {
         
         // draw the text
         let text = game_state_to_str(&game_state);
+        // println!("{:?}",self);
         draw_text(ctx, &text);
-        
         // build the mesh
         let mbb = mb.build(ctx)?;
         ggez::graphics::draw(ctx, &mbb, DrawParam::default())?;
@@ -458,159 +545,3 @@ fn game_state_to_str(game_state: &GameState) -> String {
 }
 
 
-// tests
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn check_opponent() {
-        let player_x = Player::X;
-        let player_o = Player::O;
-        assert_eq!(player_x.opponent(), player_o);
-        assert_eq!(player_o.opponent(), player_x);
-    }
-
-    #[test]
-    fn check_new_empty_board() {
-        let board = Board::new(Player::X);
-        assert_eq!(board.fields, [
-            [None, None, None],
-            [None, None, None],
-            [None, None, None]
-        ]);
-    }
-
-    #[test]
-    fn check_get_actions() {
-        let mut board = Board::new(Player::X);
-        board.fields = [
-            [None,              Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   None,                Some(Player::X)],
-            [Some(Player::O),   Some(Player::X),     None]
-        ];
-        let manual = vec![(0,0), (1,1), (2,2)]; // row and column
-        assert_eq!(board.get_actions(), manual);
-    }
-
-
-    #[test]
-    fn check_is_legal_action() {
-        let mut board = Board::new(Player::X);
-        board.fields = [
-            [None,               Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),    None,                Some(Player::X)],
-            [Some(Player::O),    Some(Player::X),     None]
-        ];
-        let mut action = (4, 3);
-        assert!(!board.is_legal_action(action));
-        action = (1, 1);
-        assert!(board.is_legal_action(action));
-    }
-
-    #[test]
-    fn check_perform_action() {
-        let mut board = Board::new(Player::X);
-        board.fields = [
-            [None,              Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   None,                Some(Player::X)],
-            [Some(Player::O),   Some(Player::X),     None]
-        ];
-        let action = (2, 2);
-        board.perform_action(action);
-
-        let mut board2 = Board::new(Player::X);
-        board2.fields = [
-            [None,              Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   None,                Some(Player::X)],
-            [Some(Player::O),   Some(Player::X),     Some(Player::X)]
-        ];
-
-        assert_eq!(board.fields, board2.fields);
-    }
-
-    #[test]
-    fn check_board_cloning() {
-        let mut board = Board::new(Player::X);
-        board.fields = [
-            [None,              Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   None,                Some(Player::X)],
-            [Some(Player::O),   Some(Player::X),     None]
-        ];
-
-        let board2 = board.clone();
-        assert_eq!(board.fields, board2.fields);
-    }
-
-    #[test]
-    fn check_is_ended_winner() {
-        let mut board = Board::new(Player::X);
-        board.fields = [
-            [None,              Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   Some(Player::X),     Some(Player::X)],
-            [Some(Player::O),   Some(Player::O),     None]
-        ];
-        assert!(board.is_ended()); // X Won
-
-    }
-
-    #[test]
-    fn check_is_ended_no_moves() {
-        let mut board = Board::new(Player::X);
-
-        board.fields = [
-            [Some(Player::O),   Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   Some(Player::O),     Some(Player::X)],
-            [Some(Player::X),   Some(Player::O),     Some(Player::X)]
-        ];
-        assert!(board.is_ended()); // No more fields available with None
-
-    }
-
-    
-    #[test]
-    fn check_get_winner() {
-        let mut board = Board::new(Player::O);
-        board.fields = [
-            [None,              Some(Player::X),     Some(Player::O)],
-            [Some(Player::X),   Some(Player::X),     Some(Player::X)],
-            [Some(Player::O),   Some(Player::O),     None]
-        ];
-
-        let mut manual_winner = Player::X;
-
-        //assert_eq!(board.get_winner().unwrap(), manual_winner);
-        let game_state = board.get_winner();
-        match game_state {
-            GameState::Tie => {},
-            GameState::InProgress => {},
-            GameState::GameWon { player, .. } => match player {
-                Player::O => assert_eq!(Player::O, manual_winner),
-                Player::X => assert_eq!(Player::X, manual_winner),
-            },
-        }
-
-        board.fields = [
-            [None,              None,                None],
-            [None,              None,                None],
-            [Some(Player::O),   Some(Player::O),     Some(Player::O)]
-        ];
-
-        manual_winner = Player::O;
-        
-        //assert_eq!(board.get_winner().unwrap(), manual_winner); 
-        let game_state = board.get_winner();
-        match game_state {
-            GameState::Tie => {},
-            GameState::InProgress => {},
-            GameState::GameWon { player, .. } => match player {
-                Player::O => assert_eq!(Player::O, manual_winner),
-                Player::X => assert_eq!(Player::X, manual_winner),
-            },
-        }
-    }
-    
-    
-    
-}
