@@ -3,6 +3,7 @@
 //! instead of implementing a MainState struct for the game state
 //! separate from the Board struct. Sorry for the ugly code.
 
+
 use crate::drawing::*;
 
 use ggez::{
@@ -87,7 +88,7 @@ impl Board {
 
 
     pub fn next_player(&self) -> Player {
-        
+
         self.next_player
     }
 

@@ -68,6 +68,5 @@ fn main() {
         
     }
     println!("bye bye!");
-
 }
 //{header: "SendMsg".to_string(),  msg}

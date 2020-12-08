@@ -11,7 +11,6 @@ mod drawing;
 use constants::{NAME, AUTHOR, WINDOW_SIZE};
 use crate::game::{Board, Player};
 
-
 fn main() -> GameResult {
 
     // Make a Context and an event loop
@@ -26,3 +25,4 @@ fn main() -> GameResult {
     // launch the game by start running the event loop
     // uses the context and event loop we created above and the game state we just created
     event::run(ctx, event_loop, state)
+}
