@@ -5,7 +5,8 @@ use std::thread;
 
 const LOCAL: &str = "127.0.0.1:6000";
 const MSG_SIZE: usize = 128;
-
+// const PORT: &str= ":6000";
+// const PORT: &str = &*std::env::var("PORT").unwrap().to_owned();
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
 }
@@ -23,7 +24,16 @@ use crate::TicTacToeStructs::TicTacToeStructs::Rooms;
 
 
 fn main() {
-    let server = TcpListener::bind(LOCAL).expect("Listener failed to bind");
+    let PORT: &str = &*std::env::var("PORT").unwrap().to_owned();
+    // let PORT: &str= "6000";
+    // println!("here1?");
+    let addr = Ipv4Addr::UNSPECIFIED;
+    let IP = std::env::var("IP").unwrap().to_owned()
+    println!("local ip address: {:?}", addr);
+    println!("here?");
+    let localIp = IP+":" +PORT; 
+    println!("Local Ip:PORT {}", localIp);
+    let server = TcpListener::bind(localIp).expect("Listener failed to bind");
     server.set_nonblocking(true).expect("failed to initialize non-blocking");
     let mut Rooms = Rooms::new();
     Rooms.addRoom("123".to_string());
