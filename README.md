@@ -10,5 +10,6 @@ Single player Tic-Tac-Toe game written in Rust
 
 # Features 
 - A two-player game where each player will be randomly picked to be player X or player O 
-- Currently only single player but working on integrating servers for multiplayer functionality
+- Multiplayer functionality 
+      - Join one of two possible rooms and challenge your friends
 
