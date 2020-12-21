@@ -152,14 +152,13 @@ pub mod TicTacToeStructs {
         pub fn broadcastToAll(&self, msg: Message){
             println!("calling broadcast... in object");
             println!("users {:?}", self.users);
-            self.users.iter().filter_map(|client| {
+           let temp =  self.users.iter().filter_map(|client| {
                 println!("msg: {:?}", msg);
                 let mut buff = bincode::serialize(&msg).unwrap();
                 buff.resize(MSG_SIZE, 0);
                 
                 client.getStream().try_clone().expect("failed to clone client").write_all(&buff).map(|_| client).ok()
             }).collect::<Vec<_>>();
-
         }
         pub fn getId(self)-> String{
             self.id
@@ -169,6 +168,19 @@ pub mod TicTacToeStructs {
                 return true
             }   
             false
+        }
+        pub fn removeSocket(&mut self, addr:SocketAddr){
+            self.users.retain(|x| x.getAddr() != addr);
+        }
+        pub fn startGame(&self, addr: SocketAddr){
+            let user = &self.users[0];
+            let mut buff = bincode::serialize(&Message::new("PlayerTurn".to_string(),
+            "".to_string())).unwrap();
+            let mut temp = user.getStream().try_clone().expect("failed to clone client");
+            buff.resize(MSG_SIZE, 0);
+            if let Err(io_error) = temp.write_all(&buff) {
+                println!("io error {}", io_error);
+            }
         }
     } 
 
@@ -196,6 +208,9 @@ pub mod TicTacToeStructs {
         }
         pub fn addMemberToRoom(&mut self, id:String, user: User) -> bool{
             if let Some(pos) = self.rooms.iter().position(|x| x.id == id){
+                if self.rooms[pos].getNumberOfPlayers() == 2{
+                     return false;
+                }
                 let added = self.rooms[pos].addMemeber(user);
                 println!("room: {:?} added: {:?}",self.rooms,added );
                 return added
@@ -214,6 +229,16 @@ pub mod TicTacToeStructs {
                 let z = &mut self.rooms[pos];
                 z.Move(msg);
             }  
+        }
+        pub fn removeSocket(&mut self, addr: SocketAddr) {
+           if let Some(pos) = self.rooms.iter().position(|room| room.isAddrInRoom(addr) == true){
+                self.rooms[pos].removeSocket(addr);
+            }  
+        }
+        pub fn startGame(&mut self, addr: SocketAddr){
+            if let Some(pos) = self.rooms.iter().position(|room| room.isAddrInRoom(addr) == true){
+                self.rooms[pos].startGame(addr);
+            } 
         }
     }
 

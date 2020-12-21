@@ -22,16 +22,17 @@ use std::net::Ipv4Addr;
 
 
 fn main() {
-    let PORT: &str = &*std::env::var("PORT").unwrap().to_owned();
-    // let PORT: &str= "6000";
-    // println!("here1?");
-    let addr = Ipv4Addr::UNSPECIFIED;
-    let IP = std::env::var("IP").unwrap().to_owned();
-    println!("local ip address: {:?}", addr);
-    println!("here?");
-    let localIp = IP+":" +PORT; 
-    println!("Local Ip:PORT {}", localIp);
-    let server = TcpListener::bind(localIp).expect("Listener failed to bind");
+    // let PORT: &str = &*std::env::var("PORT").unwrap().to_owned();
+    // // let PORT: &str= "6000";
+    // // println!("here1?");
+    // let addr = Ipv4Addr::UNSPECIFIED;
+    // let IP = std::env::var("IP").unwrap().to_owned();
+    // println!("local ip address: {:?}", addr);
+    // println!("here?");
+    // let localIp = IP+":" +PORT; 
+    
+    // println!("Local Ip:PORT {}", localIp);
+    let server = TcpListener::bind(LOCAL).expect("Listener failed to bind");
     server.set_nonblocking(true).expect("failed to initialize non-blocking");
     let mut Rooms = Rooms::new();
     Rooms.addRoom("123".to_string());
@@ -56,6 +57,8 @@ fn main() {
                     }, 
                     Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
                     Err(_) => {
+                        tx.send(ServerMessage::new(User::new( socket.try_clone().expect("failed to clone client"), addr),Message::new("DeleteSocket".to_string(),"".to_string()))).expect("failed to send msg to rx");
+                        // Rooms.removeSocket(addr);
                         println!("closing connection with: {}", addr);
                         break;
                     }
@@ -66,7 +69,9 @@ fn main() {
         }
 
         if let Ok(msg) = rx.try_recv() {
-            if msg.getMessage().getHeader() == "JoinRoom" {
+            if msg.getMessage().getHeader() == "DeleteSocket" {
+                Rooms.removeSocket(msg.getUser().getAddr());
+            }else if msg.getMessage().getHeader() == "JoinRoom" {
                 println!("msg:{:?}",msg);
                 if Rooms.addMemberToRoom(msg.getMessage().getData(), msg.getUser()) {
                     println!("found room: ");
@@ -79,14 +84,15 @@ fn main() {
                     if let Err(io_error) = temp.write_all(&buff) {
                         println!("io error {}", io_error);
                     }
-                    if numOfPlayers == currentPlayerTurn{
-                        let mut buff = bincode::serialize(&Message::new("PlayerTurn".to_string(),
-                        "".to_string())).unwrap();
-                        let mut temp = msg.getUser().getStream().try_clone().expect("failed to clone client");
-                        buff.resize(MSG_SIZE, 0);
-                        if let Err(io_error) = temp.write_all(&buff) {
-                            println!("io error {}", io_error);
-                        }
+                    if numOfPlayers == 2{
+                        // let mut buff = bincode::serialize(&Message::new("PlayerTurn".to_string(),
+                        // "".to_string())).unwrap();
+                        // let mut temp = msg.getUser().getStream().try_clone().expect("failed to clone client");
+                        // buff.resize(MSG_SIZE, 0);
+                        // if let Err(io_error) = temp.write_all(&buff) {
+                        //     println!("io error {}", io_error);
+                        // }
+                        Rooms.startGame(msg.getUser().getAddr());
                     }
                 }else{
                     println!("did not find room");

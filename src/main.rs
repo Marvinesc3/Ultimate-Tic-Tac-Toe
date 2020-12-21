@@ -19,10 +19,12 @@ use std::io::{self, ErrorKind, Read, Write};
 use std::net::TcpStream;
 use std::sync::mpsc::{self, TryRecvError};
 use std::thread;
-use std::time::Duration;
+use std::time::Duration;        
 use crossbeam_channel::unbounded;
 
 const LOCAL: &str = "127.0.0.1:6000";
+// const LOCAL: &str = "46.252.181.151:16797";
+
 const MSG_SIZE: usize = 128;
 
 fn main() -> GameResult {
