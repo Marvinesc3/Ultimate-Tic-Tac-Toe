@@ -22,8 +22,8 @@ use std::thread;
 use std::time::Duration;        
 use crossbeam_channel::unbounded;
 
-const LOCAL: &str = "127.0.0.1:6000";
-// const LOCAL: &str = "46.252.181.151:16797";
+// const LOCAL: &str = "127.0.0.1:6000";
+const LOCAL: &str = "46.252.181.151:16797";
 
 const MSG_SIZE: usize = 128;
 

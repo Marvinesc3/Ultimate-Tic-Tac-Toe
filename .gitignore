@@ -1,2 +1,4 @@
 /target
 test
+/multiplayer/server/target
+/multiplayer/client/target

@@ -10,4 +10,4 @@ edition = "2018"
 ggez = "0.5.1"
 bincode = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-crossbeam-channel = "0.5.0"
+crossbeam-channel = "0.5.0" 

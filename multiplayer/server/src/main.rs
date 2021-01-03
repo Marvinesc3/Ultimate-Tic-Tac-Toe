@@ -43,7 +43,6 @@ fn main() {
     loop {
         if let Ok((mut socket, addr)) = server.accept() {
             println!("Client {} connected", addr);
-
             let tx = tx.clone();
             clients.push(socket.try_clone().expect("failed to clone client"));
 
